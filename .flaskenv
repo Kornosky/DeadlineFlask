@@ -1,0 +1,2 @@
+FLASK_APP=deadlineflask
+FLASK_ENV=development

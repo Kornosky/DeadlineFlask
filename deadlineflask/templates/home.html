@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px auto;
+            user-select: none;
+            table-layout: fixed;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        th {
+            background-color: #f2f2f2;
+            cursor: pointer; /* Add cursor pointer to indicate clickable header */
+        }
+        .context-menu {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+        .context-menu-item {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .divider {
+            width: 5px;
+            height: 100%;
+            background-color: transparent;
+            position: absolute;
+            cursor: col-resize;
+        }
+        th[role=columnheader]:not(.no-sort) {
+            cursor: pointer;
+        }
+        
+        th[role=columnheader]:not(.no-sort):after {
+            content: '';
+            float: right;
+            margin-top: 7px;
+            border-width: 0 4px 4px;
+            border-style: solid;
+            border-color: #404040 transparent;
+            visibility: hidden;
+            opacity: 0;
+            -ms-user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+        }
+        
+        th[aria-sort=ascending]:not(.no-sort):after {
+            border-bottom: none;
+            border-width: 4px 4px 0;
+        }
+        
+        th[aria-sort]:not(.no-sort):after {
+            visibility: visible;
+            opacity: 0.4;
+        }
+        
+        th[role=columnheader]:not(.no-sort):hover:after {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.0/tablesort.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="static\javascript\colresizable\colResizable-1.6.min.js"></script>
+</head>
+<body>
+    <h1>My Deadline</h1>
+    <table id="sortableTable">
+        <thead>
+            <tr>
+                {% for key in jobs[0].keys() %}
+                <th>{{ key }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody id="jobsTable">
+            {% for job in jobs %}
+            <tr>
+                {% for key, value in job.items()%}
+                <td>{{ value }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item" id="editAction">Edit</div>
+        <div class="context-menu-item" id="deleteAction">Delete</div>
+    </div>
+
+    
+    <script src="static\javascript\custom\contextMenu.js"></script>
+
+    <script>
+         // Initialize TableSort plugin
+         new Tablesort(document.getElementById('sortableTable'));
+
+        // Initialize resizableColumns plugin on document ready
+        $(document).ready(function() {
+            var onSampleResized = function(e){  
+                var table = $(e.currentTarget); //reference to the resized table
+              };  
+            
+             $("table").colResizable({
+                liveDrag:true,
+                postbackSafe:true,
+                partialRefresh:true,
+                gripInnerHtml:"<div class='grip'></div>", 
+                draggingClass:"dragging", 
+                onResize:onSampleResized
+              });    
+        });
+    </script>
+</body>
+</html>
