@@ -9,30 +9,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="static\javascript\colresizable\colResizable-1.6.min.js"></script>
 
-    <style>
-        /* Sticky footer styles */
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            position: relative;
-        }
-        #wrapper {
-            min-height: 100%;
-            margin-bottom: -50px; /* Must be the same height as the footer */
-        }
-        #footer {
-            height: 50px;
-            clear: both;
-            position: relative;
-            z-index: 10;
-            background-color: #f5f5f5;
-            text-align: center;
-            line-height: 50px; /* Vertical centering of content */
-            bottom: 0; /* Stick it to the bottom */
-            width: 100%;
-        }
-    </style>
 </head>
 <body>
     <div id="wrapper">
@@ -44,9 +20,12 @@
                 <!-- Farm statuses will be populated here -->
                 {% for status, result in farmStatuses.items() %}
                 <li>
-                    <p id="{{ status|lower|replace(' ', '_') }}">{{ status }} - {{ result }}</p>
+                    <div id="{{ status|lower|replace(' ', '_') }}">
+                        <span id="{{ status|lower|replace(' ', '_') }}_status">{{ status }}</span> - 
+                        <span id="{{ status|lower|replace(' ', '_') }}_result">{{ result }}</span>
+                    </div>
                 </li>
-                {% endfor %}
+                {% endfor %}            
             </ul>
         </div>
         <table id="sortableTable">
@@ -70,7 +49,7 @@
     </div> <!-- #wrapper ends here -->
 
     <div id="footer">
-        Refresh time: <span id="refreshTime">5 seconds</span>
+        Refresh time: <span id="refresh_time">5 seconds</span>
     </div>
 
     <script src="static\javascript\custom\contextMenu.js"></script>
@@ -83,16 +62,49 @@
         .then(data => {
             // Update farm statuses
             // Example assuming you have elements with IDs for each farm status
-            document.getElementById('farm_health').innerText = data['Farm Health'];
-            document.getElementById('overall_farm').innerText = data['Overall Farm'];
-            document.getElementById('comp_farm').innerText = data['Comp Farm'];
-
+            document.getElementById('farm_health_result').innerText = data['Farm Health'];
+            document.getElementById('overall_farm_result').innerText = data['Overall Farm'];
+            document.getElementById('comp_farm_result').innerText = data['Comp Farm'];
+            document.getElementById('refresh_time').innerText = data['Time Since Last Update'];
+           // Update jobs table
+           updateJobsTable(data['Jobs']);
         })
         .catch(error => console.error('Error updating data:', error));
     }
 
+    // Function to update the jobs table
+    function updateJobsTable(jobs) {
+        var table = document.getElementById('table-id');
+        var sort = new Tablesort(table);
+
+        // Retrieve the current sort column and order
+        var table = document.getElementById('sortableTable');
+        if (table.rows.length > 0) {
+            currentSortColumn = table.rows[0].cells[table.rows[0].cells.length - 1].textContent;
+            currentSortOrder = "asc"; // Assuming ascending order by default
+        }
+        
+        // Clear the existing jobs table
+        document.getElementById('jobsTable').innerHTML = '';
+
+        // Iterate over the jobs data and add rows to the table
+        jobs.forEach(job => {
+            let row = document.createElement('tr');
+            Object.values(job).forEach(value => {
+                let cell = document.createElement('td');
+                cell.textContent = value;
+                row.appendChild(cell);
+            });
+            document.getElementById('jobsTable').appendChild(row);
+        });
+
+    
+        // Make some Ajax request to fetch new data and on success:
+        sort.refresh();
+    }
+
     // Update data every 5 seconds (adjust as needed)
-    setInterval(updateData, 5000);
+    setInterval(updateData, 1000);
     
     // Initial update when the page loads
     updateData();

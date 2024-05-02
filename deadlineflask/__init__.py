@@ -9,13 +9,22 @@ from flask import (Flask, jsonify, redirect, render_template, request, session,
                    url_for)
 from pymongo import MongoClient
 
-# Define what makes up a "farm"
-
+# Assuming you have a persistent store to keep track of the last update time
+last_update_time = None
 
 def calculate_farm_health() -> str:
-    return "Good"
+    import random
+    
+    rngNumber = random.randint(0,10)
+    if rngNumber > 7:
+        return "Excellent"
+    if rngNumber > 3:
+        return "Normal"
+    else:         
+        return "Good"
 
 
+# Define what makes up a "farm"
 farmStatuses: Dict = {
     "Farm Health": calculate_farm_health,
     "Overall Farm": calculate_farm_health,
@@ -51,16 +60,28 @@ def create_app():
         return "User config updated successfully"
 
 
-    # Define a route for updating data
     @app.route("/update_data", methods=["GET"])
     def update_data():
+        global last_update_time
+        
         # Fetch updated data from your database or any other source
         updated_data = {
-            "Farm Health": str(datetime.datetime.now()),
-            "Overall Farm": "cat",
-            "Comp Farm": "cat",
-            #"Jobs": updated_list_of_jobs,  # Assuming you have updated data here
+            "Farm Health": calculate_farm_health(),
+            "Overall Farm": calculate_farm_health(),
+            "Comp Farm": calculate_farm_health(),
+            "Jobs": fetch_mongo_job_data(),  # Assuming you have updated data here
         }
+        
+        # Calculate time since last update
+        if last_update_time:
+            time_since_last_update = datetime.datetime.now() - last_update_time
+            updated_data["Time Since Last Update"] = str(f"{time_since_last_update.total_seconds():.0f} Seconds")
+        else:
+            updated_data["Time Since Last Update"] = "No previous update"
+        
+        # Update last update time
+        last_update_time = datetime.datetime.now()
+        
         # Return updated data as JSON response
         return json.dumps(updated_data)
 
@@ -70,6 +91,13 @@ def create_app():
         if "user_config" not in session:
             session["user_config"] = {}  # Initialize user config
 
+        final_list_of_jobs = fetch_mongo_job_data()
+
+        return render_template(
+            "home.html", jobs=final_list_of_jobs, farmStatuses=farmStatuses
+        )
+
+    def fetch_mongo_job_data():
         list_of_jobs: List[Dict] = list(app.db["Jobs"].find({}))
 
         # Unpack the Props field and cull unneeded columns
@@ -132,12 +160,7 @@ def create_app():
                         mapped_job[column] = j[column]
 
             final_list_of_jobs.append(mapped_job)
-
-        print(final_list_of_jobs)
-        print(farmStatuses)
-        return render_template(
-            "home.html", jobs=final_list_of_jobs, farmStatuses=farmStatuses
-        )
+        return final_list_of_jobs
 
     return app
 
