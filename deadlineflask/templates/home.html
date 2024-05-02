@@ -8,66 +8,114 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.0/tablesort.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="static\javascript\colresizable\colResizable-1.6.min.js"></script>
+
+    <style>
+        /* Sticky footer styles */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            position: relative;
+        }
+        #wrapper {
+            min-height: 100%;
+            margin-bottom: -50px; /* Must be the same height as the footer */
+        }
+        #footer {
+            height: 50px;
+            clear: both;
+            position: relative;
+            z-index: 10;
+            background-color: #f5f5f5;
+            text-align: center;
+            line-height: 50px; /* Vertical centering of content */
+            bottom: 0; /* Stick it to the bottom */
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-    <h1>My Deadline</h1>
-    <!-- Console displaying farm statuses -->
-    <div id="farmStatusConsole">
-        <h2>Farm Status</h2>
-        <ul id="farmStatusList">
-            <!-- Farm statuses will be populated here -->
-            {% for status, result in farmStatuses.items() %}
-            <li>
-                <p>{{ status }} - {{ result }}</p>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-    <table id="sortableTable">
-        <thead>
-            <tr>
-                {% for key in jobs[0].keys() %}
-                <th>{{ key }}</th>
+    <div id="wrapper">
+        <h1>My Deadline</h1>
+        <!-- Console displaying farm statuses -->
+        <div id="farmStatusConsole">
+            <h2>Farm Status</h2>
+            <ul id="farmStatusList">
+                <!-- Farm statuses will be populated here -->
+                {% for status, result in farmStatuses.items() %}
+                <li>
+                    <p id="{{ status|lower|replace(' ', '_') }}">{{ status }} - {{ result }}</p>
+                </li>
                 {% endfor %}
-            </tr>
-        </thead>
-        <tbody id="jobsTable">
-            {% for job in jobs %}
-            <tr>
-                {% for key, value in job.items()%}
-                <td>{{ value }}</td>
+            </ul>
+        </div>
+        <table id="sortableTable">
+            <thead>
+                <tr>
+                    {% for key in jobs[0].keys() %}
+                    <th>{{ key }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody id="jobsTable">
+                {% for job in jobs %}
+                <tr>
+                    {% for key, value in job.items()%}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
                 {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div> <!-- #wrapper ends here -->
 
-    <div id="contextMenu" class="context-menu">
-        <div class="context-menu-item" id="editAction">Edit</div>
-        <div class="context-menu-item" id="deleteAction">Delete</div>
+    <div id="footer">
+        Refresh time: <span id="refreshTime">5 seconds</span>
     </div>
 
-    
     <script src="static\javascript\custom\contextMenu.js"></script>
+<script>
+    // Function to update data without reloading the page
+    function updateData() {
+        // Make an AJAX request to Flask backend to get updated data
+        fetch('/update_data')
+        .then(response => response.json())
+        .then(data => {
+            // Update farm statuses
+            // Example assuming you have elements with IDs for each farm status
+            document.getElementById('farm_health').innerText = data['Farm Health'];
+            document.getElementById('overall_farm').innerText = data['Overall Farm'];
+            document.getElementById('comp_farm').innerText = data['Comp Farm'];
+
+        })
+        .catch(error => console.error('Error updating data:', error));
+    }
+
+    // Update data every 5 seconds (adjust as needed)
+    setInterval(updateData, 5000);
+    
+    // Initial update when the page loads
+    updateData();
+</script>
 
     <script>
-         // Initialize TableSort plugin
-         new Tablesort(document.getElementById('sortableTable'));
+        // Initialize TableSort plugin
+        new Tablesort(document.getElementById('sortableTable'));
 
         // Initialize resizableColumns plugin on document ready
         $(document).ready(function() {
             var onSampleResized = function(e){  
                 var table = $(e.currentTarget); //reference to the resized table
-              };  
+            };  
             
-             $("table").colResizable({
+            $("table").colResizable({
                 liveDrag:true,
                 postbackSafe:true,
                 partialRefresh:true,
                 gripInnerHtml:"<div class='grip'></div>", 
                 draggingClass:"dragging", 
                 onResize:onSampleResized
-              });    
+            });    
         });
     </script>
 </body>
