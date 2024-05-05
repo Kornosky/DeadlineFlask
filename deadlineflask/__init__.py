@@ -102,18 +102,19 @@ def create_app():
 
         # Unpack the Props field and cull unneeded columns
         friendly_naming_mapping = {
+            "_id": "ID",
             "Name": "Name",
             "Plug": "Plugin",
             "Status": "Status",
             "DateComp": "Completed At",
             "Date": "Submitted At",
         }
-        desired_column_list = ["Name", "Plug", "Status", "DateComp", "Date"]
+        desired_column_list = ["_id", "Name", "Plug", "Status", "DateComp", "Date"]
 
         final_list_of_jobs: List[Dict] = list()
         for j in list_of_jobs:
             j.update(j["Props"])
-
+            
             # Add custom fields
             status = "Unknown"
             total_chunks = (
@@ -158,6 +159,7 @@ def create_app():
                         mapped_job[friendly_naming_mapping[column]] = j[column]
                     else:
                         mapped_job[column] = j[column]
+            from pprint import pprint
 
             final_list_of_jobs.append(mapped_job)
         return final_list_of_jobs

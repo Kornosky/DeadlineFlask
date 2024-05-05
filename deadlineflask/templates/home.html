@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home</title>
     <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="stylesheet" href="/static/css/tabs.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.0/tablesort.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="static\javascript\colresizable\colResizable-1.6.min.js"></script>
+    <script src="static\javascript\custom\tabs.js"></script>
 
 </head>
 <body>
@@ -28,26 +30,46 @@
                 {% endfor %}            
             </ul>
         </div>
-        <table id="sortableTable">
-            <thead>
-                <tr>
-                    {% for key in jobs[0].keys() %}
-                    <th>{{ key }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody id="jobsTable">
-                {% for job in jobs %}
-                <tr>
-                    {% for key, value in job.items()%}
-                    <td>{{ value }}</td>
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div> <!-- #wrapper ends here -->
 
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tablink" onclick="openTab(event, 'jobs')" id="defaultOpen">Jobs</button>
+            <button class="tablink" onclick="openTab(event, 'other')">Other</button>
+        </div>
+
+        <!-- Tab content -->
+        <div id="jobs" class="tabcontent">            
+
+            <table id="sortableTable">
+                <thead>
+                    <tr>
+                        {% for key in jobs[0].keys() %}
+                        <th>{{ key }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody id="jobsTable">
+                    {% for job in jobs %}
+                    <tr>
+                        {% for key, value in job.items()%}
+                        <td>{{ value }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        
+    </div>
+    </div>
+
+    </div> <!-- #wrapper ends here -->
+    <!-- Context menu -->
+    <div id="contextMenu" class="context-menu">
+        <ul class="context-menu__items">
+            <li id="editAction" class="context-menu__item">Edit</li>
+            <li id="deleteAction" class="context-menu__item">Delete</li>
+        </ul>
+    </div>
     <div id="footer">
         Refresh time: <span id="refresh_time">5 seconds</span>
     </div>
@@ -74,33 +96,77 @@
 
     // Function to update the jobs table
     function updateJobsTable(jobs) {
-        var table = document.getElementById('table-id');
-        var sort = new Tablesort(table);
-
-        // Retrieve the current sort column and order
         var table = document.getElementById('sortableTable');
-        if (table.rows.length > 0) {
-            currentSortColumn = table.rows[0].cells[table.rows[0].cells.length - 1].textContent;
-            currentSortOrder = "asc"; // Assuming ascending order by default
-        }
-        
-        // Clear the existing jobs table
-        document.getElementById('jobsTable').innerHTML = '';
 
-        // Iterate over the jobs data and add rows to the table
+        // Refresh table sorting
+        var sort = new Tablesort(document.getElementById('sortableTable'));
+
+
+        // Iterate over the jobs data and modify existing rows or add new rows
         jobs.forEach(job => {
-            let row = document.createElement('tr');
-            Object.values(job).forEach(value => {
-                let cell = document.createElement('td');
-                cell.textContent = value;
-                row.appendChild(cell);
-            });
-            document.getElementById('jobsTable').appendChild(row);
+            var existingRow = findExistingRow(table, job);
+            if (existingRow) {
+                // Modify existing row
+                modifyRow(existingRow, job);
+            } else {
+                // Add new row
+                addNewRow(tbody, job);
+            }
         });
 
-    
-        // Make some Ajax request to fetch new data and on success:
         sort.refresh();
+    }
+
+    // Function to find an existing row in the table based on job ID
+    function findExistingRow(tbody, job) {
+        // Iterate over the rows in the table body
+        for (var i = 0; i < tbody.rows.length; i++) {
+            var row = tbody.rows[i];
+            // Get the job ID from the first column of the row
+            var existingJobID = row.cells[0].innerText; // Assuming the ID is in the first column
+
+            // Compare the existing job ID with the ID of the current job
+            if (existingJobID.includes(job["ID"])) {
+                // If the IDs match, return the existing row
+                return row;
+            }
+        }
+        // If no matching row is found, return null
+        return null;
+    }
+
+
+    // Function to modify an existing row if contents are different
+    function modifyRow(row, job) {
+        var cells = row.getElementsByTagName('td');
+        var jobValues = Object.values(job);
+        
+            // Check if the contents are different from the new values
+        var modified = false;
+        for (var i = 0; i < cells.length; i++) {
+            if (cells[i].textContent !== jobValues[i]) {
+                modified = true;
+                break;
+            }
+        }
+        // Update the row only if contents are different
+        if (modified) {
+            for (var i = 0; i < cells.length; i++) {
+                cells[i].textContent = jobValues[i];
+            }
+        }
+    }
+
+    // Function to add a new row
+    function addNewRow(tbody, job) {
+        var row = document.createElement('tr');
+        var jobValues = Object.values(job);
+        jobValues.forEach(value => {
+            var cell = document.createElement('td');
+            cell.textContent = value;
+            row.appendChild(cell);
+        });
+        tbody.appendChild(row);
     }
 
     // Update data every 5 seconds (adjust as needed)
