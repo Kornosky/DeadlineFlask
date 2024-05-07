@@ -9,6 +9,7 @@ from flask import (Flask, jsonify, redirect, render_template, request, session,
                    url_for)
 from pymongo import MongoClient
 
+
 # Assuming you have a persistent store to keep track of the last update time
 last_update_time = None
 
@@ -92,9 +93,10 @@ def create_app():
             session["user_config"] = {}  # Initialize user config
 
         final_list_of_jobs = fetch_mongo_job_data()
+        sortableColumns = {'Status':['Queued','Completed','Rendering'], 'Plugin': ['Houdini']}
 
         return render_template(
-            "home.html", jobs=final_list_of_jobs, farmStatuses=farmStatuses
+            "home.html", jobs=final_list_of_jobs, farmStatuses=farmStatuses, sortableColumns=sortableColumns
         )
 
     def fetch_mongo_job_data():

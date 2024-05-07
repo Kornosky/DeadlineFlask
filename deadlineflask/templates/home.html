@@ -6,60 +6,101 @@
     <title>Home</title>
     <link rel="stylesheet" href="/static/css/style.css" />
     <link rel="stylesheet" href="/static/css/tabs.css" />
+
+    <!-- Load JavaScript locally or from CDN based on environment variable -->
+    {% if environment == 'local' %}
+        <!-- Load JavaScript files locally -->
+        <script src="/path/to/local/file.js"></script>
+        <script src="/path/to/another/local/file.js"></script>
+    {% else %}
+        <!-- Load JavaScript files from CDN -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/library/1.0.0/library.min.js"></script>
+        <script src="https://cdn.anothercdn.com/library/2.0.0/library.min.js"></script>
+    {% endif %}
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.0/tablesort.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="static\javascript\colresizable\colResizable-1.6.min.js"></script>
     <script src="static\javascript\custom\tabs.js"></script>
-
 </head>
 <body>
     <div id="wrapper">
-        <h1>My Deadline</h1>
-        <!-- Console displaying farm statuses -->
-        <div id="farmStatusConsole">
-            <h2>Farm Status</h2>
-            <ul id="farmStatusList">
-                <!-- Farm statuses will be populated here -->
-                {% for status, result in farmStatuses.items() %}
-                <li>
-                    <div id="{{ status|lower|replace(' ', '_') }}">
-                        <span id="{{ status|lower|replace(' ', '_') }}_status">{{ status }}</span> - 
-                        <span id="{{ status|lower|replace(' ', '_') }}_result">{{ result }}</span>
-                    </div>
-                </li>
-                {% endfor %}            
-            </ul>
+        <div class="header-container">
+            <h1>My Deadline</h1>
+            <div id="farmStatusConsole">
+                <h2>Farm Status</h2>
+                <ul id="farmStatusList">
+                    <!-- Farm statuses will be populated here -->
+                    {% for status, result in farmStatuses.items() %}
+                    <li>
+                        <div id="{{ status|lower|replace(' ', '_') }}">
+                            <span id="{{ status|lower|replace(' ', '_') }}_status">{{ status }}</span> - 
+                            <span id="{{ status|lower|replace(' ', '_') }}_result">{{ result }}</span>
+                        </div>
+                    </li>
+                    {% endfor %}            
+                </ul>
+            </div>
         </div>
-
-        <!-- Tabs -->
-        <div class="tabs">
-            <button class="tablink" onclick="openTab(event, 'jobs')" id="defaultOpen">Jobs</button>
-            <button class="tablink" onclick="openTab(event, 'other')">Other</button>
-        </div>
-
-        <!-- Tab content -->
-        <div id="jobs" class="tabcontent">            
-
-            <table id="sortableTable">
-                <thead>
-                    <tr>
-                        {% for key in jobs[0].keys() %}
-                        <th>{{ key }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody id="jobsTable">
-                    {% for job in jobs %}
-                    <tr>
-                        {% for key, value in job.items()%}
-                        <td>{{ value }}</td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
         
-    </div>
+        <div class="tabs-container">        
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tablink" onclick="openTab(event, 'jobs')" id="defaultOpen">Jobs</button>
+                <button class="tablink" onclick="openTab(event, 'other')">Other</button>
+            </div>
+        
+            <!-- Tab content -->
+            <div id="jobs" class="tabcontent">
+                <!-- Header wrapper for jobs tab -->
+                <div id="jobs-table-header-content">
+                    <!-- Button to toggle filters visibility -->
+                    <button id="toggleFilters" onclick="toggleFilters()">Toggle Filters</button>
+                    
+                        
+                    <!-- Search Box -->
+                    <div class="search">
+                        <input type="text" id="searchInput" placeholder="Search...">
+                        <button onclick="searchTable()">Search</button>
+                    </div>
+                </div>
+                <!-- Filters and Search Box -->
+                <div class="filters-container" id="filtersContainer">
+                    <!-- Filters -->
+                    <div class="filters">
+                        {% for key, values in sortableColumns.items() %}
+                            <label>{{ key }}</label>
+                            <br>
+                            {% for value in values %}
+                                <label>
+                                    <input type="checkbox" name="filter" value="{{ key }}|{{ value }}"> {{ value }}
+                                </label><br>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <table id="sortableTable" cellpadding="5">
+                    <thead>
+                        <tr>
+                            {% for key in jobs[0].keys() %}
+                            <th>{{ key }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody id="jobsTable">
+                        {% for job in jobs %}
+                        <tr>
+                            {% for key, value in job.items()%}
+                            <td data-column="{{ key }}">{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
     </div>
 
     </div> <!-- #wrapper ends here -->
@@ -74,8 +115,79 @@
         Refresh time: <span id="refresh_time">5 seconds</span>
     </div>
 
+    <!-- Script for Search -->
+    <script>
+        function searchTable() {
+            var input, filter, table, tr, td, i, txtValue;
+            input = document.getElementById("searchInput");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("sortableTable");
+            tr = table.getElementsByTagName("tr");
+            for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td");
+                for (var j = 0; j < td.length; j++) {
+                    var cell = td[j];
+                    if (cell) {
+                        txtValue = cell.textContent || cell.innerText;
+                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                            tr[i].style.display = "";
+                            break; // Break out of inner loop, move to next row
+                        } else {
+                            tr[i].style.display = "none";
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Script to toggle filters visibility -->
+    <script>
+        // Function to toggle filters visibility and apply filtering
+    function toggleFilters() {
+        var filtersContainer = document.getElementById("filtersContainer");
+        filtersContainer.classList.toggle("filters-show");
+
+        // Apply filtering
+        applyFilters();
+    }
+
+    // Function to apply filters and filter the table
+    function applyFilters() {
+        // Get all selected checkboxes
+        var checkboxes = document.querySelectorAll('.filters input[type="checkbox"]:checked');
+        
+        // Get table rows
+        var rows = document.querySelectorAll('#jobsTable tr');
+        
+        // Iterate over each row
+        rows.forEach(function(row) {
+            var showRow = true; // Flag to determine if the row should be shown
+            
+            // Iterate over each selected checkbox
+            checkboxes.forEach(function(checkbox) {
+                var [key, value] = checkbox.value.split('|'); // Split value into key and value
+                
+                // Check if the row contains the selected filter value
+                var cell = row.querySelector('td[data-column="' + key + '"]');
+                if (cell && cell.textContent.trim() !== value) {
+                    showRow = false; // Hide row if it doesn't match any selected filter
+                }
+            });
+            
+            // Show or hide row based on filtering result
+            row.style.display = showRow ? '' : 'none';
+        });
+    }
+
+    // Add event listeners to checkboxes to apply filters when checked
+    document.querySelectorAll('.filters input[type="checkbox"]').forEach(function(checkbox) {
+        checkbox.addEventListener('change', applyFilters);
+    });
+    </script>
+
     <script src="static\javascript\custom\contextMenu.js"></script>
 <script>
+    
     // Function to update data without reloading the page
     function updateData() {
         // Make an AJAX request to Flask backend to get updated data

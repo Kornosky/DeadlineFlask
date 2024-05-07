@@ -1,3 +1,7 @@
 Do lots of "My" views, like "My projects" "My Jobs" 
 
 View for Producers to start with
+
+Set up pydantic models for everyting
+
+Ability to set notification for job
