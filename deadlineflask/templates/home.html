@@ -4,24 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home</title>
-    <link rel="stylesheet" href="/static/css/style.css" />
-    <link rel="stylesheet" href="/static/css/tabs.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/style.css')}}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/tabs.css')}}" />
 
     <!-- Load JavaScript locally or from CDN based on environment variable -->
     {% if environment == 'local' %}
         <!-- Load JavaScript files locally -->
-        <script src="/path/to/local/file.js"></script>
-        <script src="/path/to/another/local/file.js"></script>
     {% else %}
         <!-- Load JavaScript files from CDN -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/library/1.0.0/library.min.js"></script>
-        <script src="https://cdn.anothercdn.com/library/2.0.0/library.min.js"></script>
     {% endif %}
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.0/tablesort.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="static\javascript\colresizable\colResizable-1.6.min.js"></script>
-    <script src="static\javascript\custom\tabs.js"></script>
+    <script src="{{ url_for('static', filename='\javascript\custom\tabs.js') }}"></script>
+    <script src="{{ url_for('static', filename='\javascript\custom\updateTable.js') }}"></script>
+    <script src="{{ url_for('static', filename='\javascript\colresizable\colResizable-1.6.min.js') }}"></script>
 </head>
 <body>
     <div id="wrapper">
@@ -186,107 +183,6 @@
     </script>
 
     <script src="static\javascript\custom\contextMenu.js"></script>
-<script>
-    
-    // Function to update data without reloading the page
-    function updateData() {
-        // Make an AJAX request to Flask backend to get updated data
-        fetch('/update_data')
-        .then(response => response.json())
-        .then(data => {
-            // Update farm statuses
-            // Example assuming you have elements with IDs for each farm status
-            document.getElementById('farm_health_result').innerText = data['Farm Health'];
-            document.getElementById('overall_farm_result').innerText = data['Overall Farm'];
-            document.getElementById('comp_farm_result').innerText = data['Comp Farm'];
-            document.getElementById('refresh_time').innerText = data['Time Since Last Update'];
-           // Update jobs table
-           updateJobsTable(data['Jobs']);
-        })
-        .catch(error => console.error('Error updating data:', error));
-    }
-
-    // Function to update the jobs table
-    function updateJobsTable(jobs) {
-        var table = document.getElementById('sortableTable');
-
-        // Refresh table sorting
-        var sort = new Tablesort(document.getElementById('sortableTable'));
-
-
-        // Iterate over the jobs data and modify existing rows or add new rows
-        jobs.forEach(job => {
-            var existingRow = findExistingRow(table, job);
-            if (existingRow) {
-                // Modify existing row
-                modifyRow(existingRow, job);
-            } else {
-                // Add new row
-                addNewRow(tbody, job);
-            }
-        });
-
-        sort.refresh();
-    }
-
-    // Function to find an existing row in the table based on job ID
-    function findExistingRow(tbody, job) {
-        // Iterate over the rows in the table body
-        for (var i = 0; i < tbody.rows.length; i++) {
-            var row = tbody.rows[i];
-            // Get the job ID from the first column of the row
-            var existingJobID = row.cells[0].innerText; // Assuming the ID is in the first column
-
-            // Compare the existing job ID with the ID of the current job
-            if (existingJobID.includes(job["ID"])) {
-                // If the IDs match, return the existing row
-                return row;
-            }
-        }
-        // If no matching row is found, return null
-        return null;
-    }
-
-
-    // Function to modify an existing row if contents are different
-    function modifyRow(row, job) {
-        var cells = row.getElementsByTagName('td');
-        var jobValues = Object.values(job);
-        
-            // Check if the contents are different from the new values
-        var modified = false;
-        for (var i = 0; i < cells.length; i++) {
-            if (cells[i].textContent !== jobValues[i]) {
-                modified = true;
-                break;
-            }
-        }
-        // Update the row only if contents are different
-        if (modified) {
-            for (var i = 0; i < cells.length; i++) {
-                cells[i].textContent = jobValues[i];
-            }
-        }
-    }
-
-    // Function to add a new row
-    function addNewRow(tbody, job) {
-        var row = document.createElement('tr');
-        var jobValues = Object.values(job);
-        jobValues.forEach(value => {
-            var cell = document.createElement('td');
-            cell.textContent = value;
-            row.appendChild(cell);
-        });
-        tbody.appendChild(row);
-    }
-
-    // Update data every 5 seconds (adjust as needed)
-    setInterval(updateData, 1000);
-    
-    // Initial update when the page loads
-    updateData();
-</script>
 
     <script>
         // Initialize TableSort plugin
